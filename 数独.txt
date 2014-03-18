@@ -1,0 +1,35 @@
+/* class Shudo */
+class Shudo
+{
+    private:
+        int type,square,block;
+    public:
+        Shudo( int n ) {
+            type = n;
+            square = type*type;
+            block = square*square;
+        }
+        int FF( int s ) {return s;}
+        int rr( int s ) {return s/square;}
+        int ll( int s ) {return s%square;}
+        int bb( int s ) {return rr(s)/type*type+ll(s)/type;}
+        int rs( int s, int c ) {return rr(s)*square+FF(c);}
+        int ls( int s, int c ) {return ll(s)*square+FF(c)+block;}
+        int bs( int s, int c ) {return bb(s)*square+FF(c)+block*2;}     
+    public:
+        int save( int *line, int s, int c, int move ) {
+            line[ move ++ ] = rs(s,c);
+            line[ move ++ ] = ls(s,c);
+            line[ move ++ ] = bs(s,c);
+            line[ move ++ ] = s+1+3*block;
+            return move;
+        }
+        int getfill( int* line, int *data ) {
+            int count = 0;
+            for ( int i = 0 ; i < block ; ++ i )
+                if ( data[ i ] >= 1 && data[ i ] <= 9 ) 
+                    count = save( line, i, data[ i ], count );
+            return count;
+        }    
+};
+/* shudo end */

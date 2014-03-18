@@ -1,0 +1,109 @@
+/**
+在计算科学理论中，这一类问题的解答被称之为NPC问题中的Hitting Set Problem，中文名应该叫做碰集问题。
+该类问题可以通过转换成为精确覆盖问题，其中以行表示概然，以列表示常规约束。
+在数独问题中，行所表示的概然状态很明显为（r,c,k）即行，列，放置的数字。而列所表示的约束大致整理了下，
+分做四种，即r行中放置数k可行性，c列放置数k可行性，放置于(r,c)格子可行性以及块b(即所属区域)放置数k的可行性。
+因此行总共有N*N*N=9*9*9=729个，列总共有9*9*4=324个，问题转化为在729*324的矩阵中取若干行，使每个列只有一个'1'，
+此时对应一个数独的解，而(r,c)格的约束保证了我们最后解的行数一定<=N*N。至此，模型转化完成。
+**/
+const int maxn=50000+123;
+const int maxc=5000+5;
+
+int S[maxc], L[maxn], R[maxn], D[maxn], U[maxn];
+int H[maxc], ok[maxc], sz, C[maxn], mark[maxn];
+///H是横向的表头， 不知道必不必要
+void Link(int row, int col) {
+    S[col]++;
+    C[sz]=col;///C域指向列头
+    U[sz]=U[col];
+    D[U[col]]=sz;
+    D[sz]=col;
+    U[col]=sz;
+
+    if(H[row]==-1)H[row]=L[sz]=R[sz]=sz;
+    else {
+        L[sz]=L[H[row]];
+        R[L[H[row]]]=sz;
+        R[sz]=H[row];
+        L[H[row]]=sz;
+    }
+    mark[sz]=row;/// 标记每个点是哪一行（题目要求输出解属于哪一行）
+    sz++;
+}
+
+void remove(int col) {
+    L[R[col]]=L[col];
+    R[L[col]]=R[col]; /// 在列对象链表中删除col
+    for (int i=D[col]; i!=col; i=D[i]) {
+        /// 删除col列中有1元素的行
+        for (int j=R[i]; j!=i; j=R[j]) {
+            ///删除每行的1元素，并修改所在列的S域
+            U[D[j]]=U[j], D[U[j]]=D[j];
+            S[C[j]]--;
+        }
+    }
+}
+
+void resume(int col) {
+    for (int i=U[col]; i!=col; i=U[i]) {
+        for (int j=L[i]; j!=i; j=L[j]) {
+            U[D[j]]=j;
+            D[U[j]]=j;
+            S[C[j]]++;
+        }///恢复删除的元素，恢复S域
+    }///恢复删除的行
+    L[R[col]]=col;
+    R[L[col]]=col;
+}
+
+bool Dance(int k) {
+    if(R[0]==0) {
+        char ans[20][20];
+        ///printf("%d\n", '@');
+        sort(ok, ok+k);
+        for (int i=0; i<k; ++i) {
+            ///printf("%d ", ok[i]);
+            int pos=(ok[i]-1)/16;
+            ///printf("%d\n", pos);
+            ///printf("x=%d,y=%d\n", pos/16, pos%16);
+            ans[pos/16][pos%16]=(ok[i]-1)%16+'A';
+            //printf("%c", ans[pos/16][pos%16]);
+        }
+        for(int i=0; i<16; ++i) {
+            ans[i][16]=0;
+            printf("%s\n", ans[i]);
+        }
+        puts("");
+        return true;
+    }
+    int c=R[0];
+    for(int i=R[0]; i; i=R[i])
+        if(S[i]<S[c])c=i;
+    remove(c);
+    ///printf("remove col %d\n", c);
+    for(int i=D[c]; i!=c; i=D[i]) {
+        ok[k]=mark[i];
+        for (int j=R[i]; j!=i; j=R[j])
+            remove(C[j]);
+        if(Dance(k+1))return true;
+        for (int j=L[i]; j!=i; j=L[j])
+            resume(C[j]);
+    }
+    resume(c);
+    return false;
+}
+
+void initL(int x) {
+    for (int i=0; i<=x; ++i) { ///i<x???
+        S[i]=0;
+        D[i]=U[i]=i;
+        L[i+1]=i;
+        R[i]=i+1;
+    }///对列表头初始化
+    R[x]=0;
+    sz=x+1;///真正的元素从m+1开始
+    memset (H, -1, sizeof(H));
+    ///mark每个位置的名字
+}
+
+

@@ -1,0 +1,72 @@
+#define maxn 10004*50
+struct node {
+    int ch[26];
+    int cnt;
+    int fail;
+    void init() {
+        memset(ch,0,sizeof(ch));
+        fail = 0 ;
+        cnt = 0 ;
+    }
+};
+node tt[maxn];
+int ROOT ,sind ;
+void init() {
+    ROOT = 0 ;
+    tt[0].init();
+    sind = 1 ;
+}
+void ins(char *str) {
+    int idx = ROOT;
+    int len = strlen(str);
+    for(int i = 0; i < len ; i ++ ) {
+        int j = str[i] -  'a' ;
+        if(tt[idx].ch[j] == 0 ) {
+            tt[sind].init();
+            tt[idx].ch[j] = sind++;
+        }
+        idx = tt[idx].ch[j];
+    }
+    tt[idx].cnt ++ ;
+}
+void makefail() {
+    queue<int> q;
+    while(!q.empty()) q.pop();
+    for(int i = 0 ; i < 26 ; i ++) {
+        if(tt[ROOT].ch[i]) {
+            tt[tt[ROOT].ch[i]].fail = ROOT;
+            q.push(tt[ROOT].ch[i]);
+        }
+    }
+    while(!q.empty()) {
+        int u = q.front();
+        q.pop();
+        for(int i = 0 ; i < 26 ; i ++) {
+            if(tt[u].ch[i]) {
+                int v = tt[u].ch[i];
+                q.push(v);
+                int fail = tt[u].fail;
+                tt[v].fail = tt[fail].ch[i];
+                //tt[v].cnt = tt[tt[fail].ch[i]].cnt;//AC自动机状态合并
+            } else {
+                int fail = tt[u].fail;
+                tt[u].ch[i] = tt[fail].ch[i];
+            }
+        }
+    }
+}
+int ans ;
+void find(char *s) {
+    int u , j , len ;
+    len = strlen(s);
+    u = ROOT ;
+    for(int i = 0; i < len ; i ++ ) {
+        j = s[i] - 'a';
+        u = tt[u].ch[j];
+        for(int k = u ; k ; k = tt[k].fail ) {
+            ans = ans + tt[k].cnt;
+            tt[k].cnt = 0 ;
+        }
+    }
+    return ;
+}
